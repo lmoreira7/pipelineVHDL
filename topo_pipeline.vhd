@@ -48,8 +48,33 @@ architecture behavior of topo_pipeline is
 			memRead : in std_logic;
 			regWrite : in std_logic;
 			branch : in std_logic;
+			adiantaA : in std_logic_vector(1 downto 0);
+			adiantaB : in std_logic_vector(1 downto 0);
+			rOp1_ID_EX : out std_logic_vector(3 downto 0);
+			rOp2_ID_EX : out std_logic_vector(3 downto 0);
+			dest_EX_MEM : out std_logic_vector(3 downto 0);
+			dest_MEM_WB : out std_logic_vector(3 downto 0);
+			escReg_MEM_WB : out std_logic;
+			escReg_EX_MEM : out std_logic;
 			opcode : out std_logic_vector(3 downto 0)
 			
+		);
+		
+	end component;
+	
+	component forwarding is
+		
+		port (
+		
+			adiantaA : out std_logic_vector(1 downto 0);
+			adiantaB : out std_logic_vector(1 downto 0);
+			rOp1_ID_EX : in std_logic_vector(3 downto 0);
+			rOp2_ID_EX : in std_logic_vector(3 downto 0);
+			dest_EX_MEM : in std_logic_vector(3 downto 0);
+			dest_MEM_WB : in std_logic_vector(3 downto 0);
+			escReg_MEM_WB : in std_logic;
+			escReg_EX_MEM : in std_logic
+		
 		);
 		
 	end component;
@@ -63,6 +88,14 @@ architecture behavior of topo_pipeline is
 	signal regWrite : std_logic;
 	signal branch : std_logic;
 	signal opcode : std_logic_vector(3 downto 0);
+	signal rOp1_ID_EX : std_logic_vector(3 downto 0);
+	signal rOp2_ID_EX : std_logic_vector(3 downto 0);
+	signal dest_EX_MEM : std_logic_vector(3 downto 0);
+	signal dest_MEM_WB : std_logic_vector(3 downto 0);
+	signal escReg_MEM_WB : std_logic;
+	signal escReg_EX_MEM : std_logic;
+	signal adiantaA : std_logic_vector(1 downto 0);
+	signal adiantaB : std_logic_vector(1 downto 0);
 	
 	begin
 		
@@ -96,8 +129,31 @@ architecture behavior of topo_pipeline is
 				memRead => memRead,
 				regWrite => regWrite,
 				branch => branch,
-				opcode => opcode
+				opcode => opcode,
+				rOp1_ID_EX => rOp1_ID_EX,
+				rOp2_ID_EX => rOp2_ID_EX,
+				dest_EX_MEM => dest_EX_MEM,
+				dest_MEM_WB => dest_MEM_WB,
+				escReg_MEM_WB => escReg_MEM_WB,
+				escReg_EX_MEM => escReg_EX_MEM,
+				adiantaA => adiantaA,
+				adiantaB => adiantaB
 			
 			);
-	
+			
+		inst_forwarding : forwarding
+			
+			port map(
+				
+				rOp1_ID_EX => rOp1_ID_EX,
+				rOp2_ID_EX => rOp2_ID_EX,
+				dest_EX_MEM => dest_EX_MEM,
+				dest_MEM_WB => dest_MEM_WB,
+				escReg_MEM_WB => escReg_MEM_WB,
+				escReg_EX_MEM => escReg_EX_MEM,
+				adiantaA => adiantaA,
+				adiantaB => adiantaB
+				
+			);
+			
 end behavior;

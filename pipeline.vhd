@@ -7,6 +7,8 @@ entity pipeline is
 	
 	port (
 		
+		----- ENTRADAS DOS SINAIS DE CONTROLE --------
+		
 		clock : in std_logic;
 		reset : in std_logic;
 		aluSrc : in std_logic;
@@ -17,6 +19,27 @@ entity pipeline is
 		memRead : in std_logic;
 		regWrite : in std_logic;
 		branch : in std_logic;
+		
+		-----------------------------------------------
+		
+		------ SAIDAS P/ UNIDADE DE FORWARDING --------
+		
+		rOp1_ID_EX : out std_logic_vector(3 downto 0);
+		rOp2_ID_EX : out std_logic_vector(3 downto 0);
+		dest_EX_MEM : out std_logic_vector(3 downto 0);
+		dest_MEM_WB : out std_logic_vector(3 downto 0);
+		escReg_MEM_WB : out std_logic;
+		escReg_EX_MEM : out std_logic;
+		-----------------------------------------------
+		
+		------------ ENTRADAS FORWARDING --------------
+		
+		adiantaA : in std_logic_vector(1 downto 0);
+		adiantaB : in std_logic_vector(1 downto 0);
+		
+		-----------------------------------------------
+		
+		
 		opcode : out std_logic_vector(3 downto 0)
 		
 	);
@@ -28,6 +51,7 @@ architecture behavior of pipeline is
 	
 	
 	signal programCounter : std_logic_vector(7 downto 0);
+	signal saida : std_logic_vector(15 downto 0);
 	
 	-------------- MEMORIA DE INSTRUÇÃO ----------------
 	
@@ -62,6 +86,7 @@ architecture behavior of pipeline is
 	signal equal : std_logic;
 	signal op1 : std_logic_vector(15 downto 0);
 	signal op2 : std_logic_vector(15 downto 0);
+	signal forwardingOp : std_logic_vector(15 downto 0);
 	
 	------------------------------------------------------
 	
@@ -99,6 +124,7 @@ architecture behavior of pipeline is
 	signal regA_ID_EX : std_logic_vector(15 downto 0);
 	signal regB_ID_EX : std_logic_vector(15 downto 0);
 	signal imm_extend_ID_EX : std_logic_vector(15 downto 0);
+	signal regOp1_ID_EX : std_logic_vector(3 downto 0);
 	signal regOp2_ID_EX : std_logic_vector(3 downto 0);
 	signal regDestino_ID_EX : std_logic_vector(3 downto 0);
 	signal endereco_ID_EX : std_logic_vector(7 downto 0);
@@ -141,6 +167,13 @@ architecture behavior of pipeline is
 		
 		opcode <= op_code; -- Entrada do Decoder
 		
+		rOp1_ID_EX <= regOp1_ID_EX;
+		rOp2_ID_EX <= regOp2_ID_EX;
+		dest_EX_MEM <= regDestino_EX_MEM;
+		dest_MEM_WB <= regDestino_MEM_WB;
+		escReg_MEM_WB <= regWrite_MEM_WB;
+		escReg_EX_MEM <= regWrite_EX_MEM; 
+		
 		------------------------------------------------------
 		
 		-------------- BANCO DE REGISTRADORES ----------------
@@ -151,9 +184,15 @@ architecture behavior of pipeline is
 		
 		---------- UNIDADE LÓGICA ARITMÉTICA (ULA) -----------
 		
-		op1 <= regA_ID_EX;
+		op1 <= regA_ID_EX when adiantaA = "00" else
+				 saida when adiantaA = "01" else
+				 saidaUla_EX_MEM;
 		
-		op2 <= regB_ID_EX when aluSrc_ID_EX = '0' else
+		forwardingOp <= regB_ID_EX when adiantaB = "00" else
+							 saida when adiantaB  = "01" else
+							 saidaUla_EX_MEM;
+		
+		op2 <= forwardingOp when aluSrc_ID_EX = '0' else
 				 imm_extend_ID_EX;
 		
 		saidaUla <= add when aluControl_ID_EX = "00" else
@@ -174,6 +213,8 @@ architecture behavior of pipeline is
 		
 		memDadosOut <= memDados(conv_integer(endereco_EX_MEM));
 		
+		saida <=  memDadosOut_MEM_WB when memToReg_MEM_WB = '1' else
+					 saidaUla_MEM_WB;
 		------------------------------------------------------		
 		
 		
@@ -207,6 +248,7 @@ architecture behavior of pipeline is
 					regA_ID_EX <= (others => '0');
 					regB_ID_EX <= (others => '0');
 					imm_extend_ID_EX <= (others => '0');
+					regOp1_ID_EX <= (others => '0');
 					regOp2_ID_EX <= (others => '0');
 					regDestino_ID_EX <= (others => '0');
 					endereco_ID_EX <= (others => '0');
@@ -229,6 +271,7 @@ architecture behavior of pipeline is
 					regA_ID_EX <= bancoRegs(conv_integer(regOp1));
 					regB_ID_EX <= bancoRegs(conv_integer(regOp2));
 					imm_extend_ID_EX <= imm_extend;
+					regOp1_ID_EX <= regOp1;
 					regOp2_ID_EX <= regOp2;
 					regDestino_ID_EX <= regDest;
 					endereco_ID_EX <= endereco;
