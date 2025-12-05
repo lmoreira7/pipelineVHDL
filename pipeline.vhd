@@ -39,6 +39,21 @@ entity pipeline is
 		
 		-----------------------------------------------
 		
+		-------- ENTRADAS UNIDADE DE HAZARD -----------
+		
+		PC_Write : in std_logic;
+		IF_ID_Write : in std_logic;
+		flush_IF_ID : in std_logic;
+		flush_ID_EX : in std_logic;
+		
+		
+		opcode_IF_ID : out std_logic_vector(3 downto 0);
+		opcode_ID_EX : out std_logic_vector(3 downto 0);
+		equalALU : out std_logic;
+		lerMem_ID_EX : out std_logic;
+		dest_ID_EX : out std_logic_vector(3 downto 0);
+		
+		----------------------------------------------
 		
 		opcode : out std_logic_vector(3 downto 0)
 		
@@ -128,10 +143,11 @@ architecture behavior of pipeline is
 	signal regOp2_ID_EX : std_logic_vector(3 downto 0);
 	signal regDestino_ID_EX : std_logic_vector(3 downto 0);
 	signal endereco_ID_EX : std_logic_vector(7 downto 0);
+	signal op_ID_EX : std_logic_vector(3 downto 0);
 		
 	signal programCounter_IF_ID : std_logic_vector(7 downto 0);
 	signal instrucao_IF_ID : std_logic_vector(19 downto 0);
-		
+	signal op_IF_ID : std_logic_vector(3 downto 0);
 		
 	------------------------------------------------------
 	
@@ -146,7 +162,7 @@ architecture behavior of pipeline is
 		memInst(4) <= 20x"93005"; -- ADDI $3, $0, 5
 		memInst(5) <= 20x"3A320"; -- MUL $10, $3, $2
 		memInst(6) <= 20x"50034"; -- BEQ $0, $3, salta p/ memInst(10)
-		memInst(7) <= 20x"B7202"; -- MULI $2, $2, 2
+		memInst(7) <= 20x"B7202"; -- MULI $7, $2, 2
 		memInst(8) <= 20x"A3301"; -- SUBI $3, $3, 1
 		memInst(9) <= 20x"40006"; -- JMP memInst(6)
 		memInst(10) <= 20x"60242"; -- BNE $2, $4, salta p/ memInst(12)
@@ -166,6 +182,12 @@ architecture behavior of pipeline is
 		desloc <= regDest & instrucao_IF_ID(3 downto 0);
 		
 		opcode <= op_code; -- Entrada do Decoder
+		
+		opcode_IF_ID <= op_IF_ID;
+		opcode_ID_EX <= op_ID_EX;
+		equalALU <= equal;
+		lerMem_ID_EX <= memRead_ID_EX;
+		dest_ID_EX <= regDestino_ID_EX;
 		
 		rOp1_ID_EX <= regOp1_ID_EX;
 		rOp2_ID_EX <= regOp2_ID_EX;
@@ -222,59 +244,99 @@ architecture behavior of pipeline is
 			
 			begin
 				
-				if reset = '1' then
+					if reset = '1' then
 					
-					memToReg_MEM_WB <= '0';
-					regWrite_MEM_WB <= '0';
-					saidaUla_MEM_WB <= (others => '0');
-					memDadosOut_MEM_WB <= (others => '0');
-					regDestino_MEM_WB <= (others => '0');
+						memToReg_MEM_WB <= '0';
+						regWrite_MEM_WB <= '0';
+						saidaUla_MEM_WB <= (others => '0');
+						memDadosOut_MEM_WB <= (others => '0');
+						regDestino_MEM_WB <= (others => '0');
+						
+						memToReg_EX_MEM <= '0';
+						regWrite_EX_MEM <= '0';
+						memWrite_EX_MEM <= '0';
+						memRead_EX_MEM <= '0';
+						saidaUla_EX_MEM <= (others => '0');
+						regDestino_EX_MEM <= (others => '0');
+						endereco_EX_MEM <= (others => '0');
+						
+						memToReg_ID_EX <= '0';
+						regWrite_ID_EX <= '0';
+						memWrite_ID_EX <= '0';
+						memRead_ID_EX <= '0';
+						aluControl_ID_EX <= (others => '0');
+						regDest_ID_EX <= '0';
+						aluSrc_ID_EX <= '0';
+						regA_ID_EX <= (others => '0');
+						regB_ID_EX <= (others => '0');
+						imm_extend_ID_EX <= (others => '0');
+						regOp1_ID_EX <= (others => '0');
+						regOp2_ID_EX <= (others => '0');
+						regDestino_ID_EX <= (others => '0');
+						endereco_ID_EX <= (others => '0');
+						op_ID_EX <= (others => '0');
+						
+						programCounter_IF_ID <= (others => '0');
+						instrucao_IF_ID <= (others => '0');
+						op_IF_ID <= (others => '0');
 					
-					memToReg_EX_MEM <= '0';
-					regWrite_EX_MEM <= '0';
-					memWrite_EX_MEM <= '0';
-					memRead_EX_MEM <= '0';
-					saidaUla_EX_MEM <= (others => '0');
-					regDestino_EX_MEM <= (others => '0');
-					endereco_EX_MEM <= (others => '0');
+				elsif	rising_edge(clock) then
 					
-					memToReg_ID_EX <= '0';
-					regWrite_ID_EX <= '0';
-					memWrite_ID_EX <= '0';
-					memRead_ID_EX <= '0';
-					aluControl_ID_EX <= (others => '0');
-					regDest_ID_EX <= '0';
-					aluSrc_ID_EX <= '0';
-					regA_ID_EX <= (others => '0');
-					regB_ID_EX <= (others => '0');
-					imm_extend_ID_EX <= (others => '0');
-					regOp1_ID_EX <= (others => '0');
-					regOp2_ID_EX <= (others => '0');
-					regDestino_ID_EX <= (others => '0');
-					endereco_ID_EX <= (others => '0');
+					if IF_ID_Write = '1' then
+						
+						if flush_IF_ID = '1' then
+							
+							programCounter_IF_ID <= (others => '0');
+							instrucao_IF_ID <= (others => '0');
+							op_IF_ID <= (others => '0');
+
+						else
+						
+							programCounter_IF_ID <= programCounter;
+							instrucao_IF_ID <= memInstOut;
+							op_IF_ID <= memInstOut(19 downto 16);
+						
+						end if;
 					
-					programCounter_IF_ID <= (others => '0');
-					instrucao_IF_ID <= (others => '0');
-				
-				elsif rising_edge(clock) then
+					end if;
+						
+					if flush_ID_EX = '1' then	
 					
-					programCounter_IF_ID <= programCounter;
-					instrucao_IF_ID <= memInstOut;
+						regWrite_ID_EX <= '0';
+						memToReg_ID_EX <= '0';
+						memWrite_ID_EX <= '0';
+						memRead_ID_EX <= '0';
+						aluControl_ID_EX <= (others => '0');
+						regDest_ID_EX <= '0';
+						aluSrc_ID_EX <= '0';
+						regA_ID_EX <= (others => '0');
+						regB_ID_EX <= (others => '0');
+						imm_extend_ID_EX <= (others => '0');
+						regOp1_ID_EX <= (others => '0');
+						regOp2_ID_EX <= (others => '0');
+						regDestino_ID_EX <= (others => '0');
+						endereco_ID_EX <= (others => '0');
+						opcode_ID_EX <= (others => '0');
+						
+					else
+						
+						regWrite_ID_EX <= regWrite;
+						memToReg_ID_EX <= memToReg;
+						memWrite_ID_EX <= memWrite;
+						memRead_ID_EX <= memRead;
+						aluControl_ID_EX <= aluControl;
+						regDest_ID_EX <= regDst;
+						aluSrc_ID_EX <= aluSrc;
+						regA_ID_EX <= bancoRegs(conv_integer(regOp1));
+						regB_ID_EX <= bancoRegs(conv_integer(regOp2));
+						imm_extend_ID_EX <= imm_extend;
+						regOp1_ID_EX <= regOp1;
+						regOp2_ID_EX <= regOp2;
+						regDestino_ID_EX <= regDest;
+						endereco_ID_EX <= endereco;
+						opcode_ID_EX <= op_IF_ID;
 					
-					regWrite_ID_EX <= regWrite;
-					memToReg_ID_EX <= memToReg;
-					memWrite_ID_EX <= memWrite;
-					memRead_ID_EX <= memRead;
-					aluControl_ID_EX <= aluControl;
-					regDest_ID_EX <= regDst;
-					aluSrc_ID_EX <= aluSrc;
-					regA_ID_EX <= bancoRegs(conv_integer(regOp1));
-					regB_ID_EX <= bancoRegs(conv_integer(regOp2));
-					imm_extend_ID_EX <= imm_extend;
-					regOp1_ID_EX <= regOp1;
-					regOp2_ID_EX <= regOp2;
-					regDestino_ID_EX <= regDest;
-					endereco_ID_EX <= endereco;
+					end if;
 					
 					regWrite_EX_MEM <= regWrite_ID_EX;
 					memToReg_EX_MEM <= memRead_ID_EX;
@@ -306,22 +368,21 @@ architecture behavior of pipeline is
 				elsif rising_edge(clock) then
 				
 				-------------------------- INCREMENTO DO PROGRAM COUNTER --------------------------
+					if PC_Write = '1' then
 					
-					if (memInstOut(18) = '0') or (memInstOut(19 downto 16) = "0101" and equal = '0') or (memInstOut(19 downto 16) = "0110" and equal = '1') or (memInstOut(19 downto 16) = "0111") then
-						
-						programCounter <= programCounter + 1;
-					
-					else
-						
-						if op_code = "0100" then -- INCRMENTO DO JUMP
+						if memInstOut(19 downto 16) = "0100" then
 							
-							programCounter <= endereco;
-						
-						else -- INCREMENTO DO BRANCH
+							programCounter <= memInstOut(7 downto 0);
 							
+						elsif (op_code = "0101" and equal = '1') or (op_code = "0110" and equal = '0') then
+								
 							programCounter <= programCounter + desloc;
-						
+							
+						else
+							
+							programCounter <= programCounter + 1;
 						end if;
+					
 					end if;
 					
 				-----------------------------------------------------------------------------------
@@ -353,7 +414,7 @@ architecture behavior of pipeline is
 					end if;
 					
 				---------------------------------------------------------------------------------
-		
+
 				end if;
 		end process;
 

@@ -38,7 +38,7 @@ architecture behavior of decoder is
 					aluControl <= "00";
 					memToReg <= '1';
 					memWrite <= '0';
-					memRead <= '0';
+					memRead <= '1';
 					regWrite <= '1';
 					branch <= '0';
 					
