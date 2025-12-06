@@ -50,21 +50,13 @@ architecture behavior of topo_pipeline is
 			branch : in std_logic;
 			adiantaA : in std_logic_vector(1 downto 0);
 			adiantaB : in std_logic_vector(1 downto 0);
+			
 			rOp1_ID_EX : out std_logic_vector(3 downto 0);
 			rOp2_ID_EX : out std_logic_vector(3 downto 0);
 			dest_EX_MEM : out std_logic_vector(3 downto 0);
 			dest_MEM_WB : out std_logic_vector(3 downto 0);
 			escReg_MEM_WB : out std_logic;
 			escReg_EX_MEM : out std_logic;
-			opcode_IF_ID : out std_logic_vector(3 downto 0);
-			opcode_ID_EX : out std_logic_vector(3 downto 0);
-			equalALU : out std_logic;
-			lerMem_ID_EX : out std_logic;
-			dest_ID_EX : out std_logic_vector(3 downto 0);
-			PC_Write : in std_logic;
-			IF_ID_Write : in std_logic;
-			flush_IF_ID : in std_logic;
-			flush_ID_EX : in std_logic;
 			opcode : out std_logic_vector(3 downto 0)
 			
 		);
@@ -88,26 +80,6 @@ architecture behavior of topo_pipeline is
 		
 	end component;
 	
-	component hazard is
-		
-		port (
-			
-			PC_Write : out std_logic;
-			IF_ID_Write : out std_logic;
-			flush_IF_ID : out std_logic;
-			flush_ID_EX : out std_logic;
-			mRead_ID_EX : in std_logic;
-			rOp2_ID_EX : in std_logic_vector(3 downto 0);
-			regDestino_ID_EX : in std_logic_vector(3 downto 0);
-			opcode_IF_ID : in std_logic_vector(3 downto 0);
-			opcode_ID_EX : in std_logic_vector(3 downto 0);
-			regWrite_EX_MEM : in std_logic;
-			equal : in std_logic
-			
-		);
-		
-	end component;
-	
 	signal aluSrc : std_logic;
 	signal regDst : std_logic;
 	signal aluControl : std_logic_vector(1 downto 0);
@@ -125,15 +97,6 @@ architecture behavior of topo_pipeline is
 	signal escReg_EX_MEM : std_logic;
 	signal adiantaA : std_logic_vector(1 downto 0);
 	signal adiantaB : std_logic_vector(1 downto 0);
-	signal PC_Write : std_logic;
-	signal IF_ID_Write : std_logic;
-	signal flush_IF_ID : std_logic;
-	signal flush_ID_EX : std_logic;
-	signal opcode_IF_ID : std_logic_vector(3 downto 0);
-	signal opcode_ID_EX : std_logic_vector(3 downto 0);
-	signal lerMem_ID_EX : std_logic;
-	signal dest_ID_EX : std_logic_vector(3 downto 0);
-	signal equalALU : std_logic;
 	
 	begin
 		
@@ -175,15 +138,6 @@ architecture behavior of topo_pipeline is
 				escReg_MEM_WB => escReg_MEM_WB,
 				escReg_EX_MEM => escReg_EX_MEM,
 				adiantaA => adiantaA,
-				PC_Write => PC_Write,
-				IF_ID_Write => IF_ID_Write,
-				flush_IF_ID => flush_IF_ID,
-				flush_ID_EX => flush_ID_EX,
-				opcode_IF_ID => opcode_IF_ID,
-				opcode_ID_EX => opcode_ID_EX,
-				equalALU => equalALU,
-				lerMem_ID_EX => lerMem_ID_EX,
-				dest_ID_EX => dest_ID_EX,
 				adiantaB => adiantaB
 			
 			);
@@ -201,23 +155,6 @@ architecture behavior of topo_pipeline is
 				adiantaA => adiantaA,
 				adiantaB => adiantaB
 				
-			);
-			
-		inst_hazard : hazard
-			
-			port map(
-			
-				PC_Write => PC_Write,
-				IF_ID_Write => IF_ID_Write,
-				flush_IF_ID => flush_IF_ID,
-				flush_ID_EX => flush_ID_EX,
-				rOp2_ID_EX => rOp2_ID_EX,
-				opcode_IF_ID => opcode_IF_ID,
-				opcode_ID_EX => opcode_IF_ID,
-				equal => equalALU,
-				mread_ID_EX => lerMem_ID_EX,
-				regDestino_ID_EX => dest_ID_EX,
-				regWrite_EX_MEM => escReg_EX_MEM
 			);
 			
 end behavior;

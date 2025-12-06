@@ -31,9 +31,9 @@ architecture behavior of hazard is
 	
 	begin
 		
-		branchTomado <= '1' when (opcode_ID_EX = "0101") and (equal = '1') else '0';
+		branchTomado <= '1' when (opcode_ID_EX = "0101" and equal = '1') or (opcode_ID_EX = "0110" and equal = '0') else '0';
 		
-		process(mRead_ID_EX, rOp2_ID_EX, regDestino_ID_EX, regWrite_EX_MEM, Opcode_IF_ID)
+		process(mRead_ID_EX, rOp2_ID_EX, regDestino_ID_EX, regWrite_EX_MEM, Opcode_IF_ID, branchTomado, equal)
 			
 			begin
 			
@@ -57,6 +57,8 @@ architecture behavior of hazard is
 				
 				if(branchTomado = '1') then
 					
+					PC_Write <= '1';
+					IF_ID_Write <= '1';
 					flush_IF_ID <= '1';
 					flush_ID_EX <= '1';
 				
